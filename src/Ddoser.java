@@ -26,7 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Ddoser {
 
     final static AtomicLong successfulCalls = new AtomicLong();
-    final static int CORES = Runtime.getRuntime().availableProcessors();
+
+    //TODO: Fix to not use context switch
+  //  final static int CORES = Runtime.getRuntime().availableProcessors();
+    final static int CORES = 50;
     final static Queue<Map.Entry> PROXIES = getProxies();
 
 
@@ -138,12 +141,11 @@ public class Ddoser {
                     callsPerThread.incrementAndGet();
                     throw new IllegalArgumentException();
                 });
-
+                if (isExeption.get()) {
+                    throw new IllegalArgumentException();
+                }
             }
 
-            if (isExeption.get()) {
-                throw new IllegalArgumentException();
-            }
         }
     }
 }
